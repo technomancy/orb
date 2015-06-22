@@ -124,4 +124,9 @@ orb.shell = {
       local group_dir = f.etc.groups[group]
       return group_dir and group_dir[user]
    end,
+
+   login = function(f, user, password)
+      -- TODO: check password
+      return f.etc.groups[user] and f.home[user]
+   end,
 }
