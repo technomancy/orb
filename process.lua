@@ -23,7 +23,7 @@ orb.process = {
    -- a chance to run till they yield. No attempt at fairness or time limits
    -- yet.
    scheduler = function(f)
-      for u,procs in pairs(f.proc) do
+      for _,procs in pairs(f.proc) do
          if(type(procs) == "table") then
             for k,p in pairs(procs) do
                if(type(p) == "table" and p.thread) then
