@@ -94,9 +94,9 @@ orb.fs = {
    end,
 
    -- This is for copying stuff from the host OS into the virtualized OS.
-   copy_to_fs = function(f, fs_path, real_path)
+   copy_to_fs = function(f, fs_path, real_path, resources)
       local dir, base = orb.fs.dirname(fs_path)
-      local path = orb.mod_dir .. "/resources/" .. real_path
+      local path = resources .. real_path
       local file = io.open(path, "r")
       dir = dir:gsub("^/", "")
       f[dir][base] = file:read("*all")
@@ -121,7 +121,7 @@ orb.fs = {
                                        reload = "/bin/reload",
                                        mkfifo = "/bin/mkfifo",
       }) do
-         orb.fs.copy_to_fs(f, fs_path, real_path)
+         orb.fs.copy_to_fs(f, fs_path, real_path, orb.mod_dir.."/resources/")
       end
    end,
 
