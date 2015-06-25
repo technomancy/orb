@@ -57,8 +57,8 @@ orb.shell = {
    -- Execute a command directly in the current coroutine. This is a low-level
    -- call; usually you want orb.process.spawn which creates it as a proper
    -- process.
-   exec = function(f, env, command)
-      local env = orb.utils.shallow_copy(env)
+   exec = function(f, orig_env, command, extra_sandbox)
+      local env = orb.utils.shallow_copy(orig_env)
       local executable_name, args = orb.shell.parse(f, env, command)
 
       for _, d in pairs(orb.utils.split(env.PATH, ":")) do
@@ -66,7 +66,7 @@ orb.shell = {
          local executable = f[orb.fs.normalize(executable_path, env.CWD)]
          if(type(executable) == "string") then
             local chunk = assert(loadstring(executable))
-            setfenv(chunk, orb.shell.sandbox(f, env))
+            setfenv(chunk, orb.shell.sandbox(f, env, extra_sandbox))
             return chunk(f, env, args)
          end
       end
@@ -74,39 +74,41 @@ orb.shell = {
    end,
 
    -- Like exec, but protected in a pcall.
-   pexec = function(f, env, command)
-      return pcall(function() orb.shell.exec(f, env, command) end)
+   pexec = function(f, env, command, extra_sandbox)
+      return pcall(function() orb.shell.exec(f, env, command, extra_sandbox) end)
    end,
 
    -- Set up the sandbox in which code runs. Need to avoid exposing anything
    -- that could allow security leaks.
-   sandbox = function(f, env)
-      local read = function(...) return orb.fs.read(f, env.IN) end
+   sandbox = function(f, env, extra_sandbox)
+      local read = function() return orb.fs.read(f, env.IN) end
       local write = function(...) return orb.fs.write(f, env.OUT, ...) end
 
-      return { orb = { utils = orb.utils,
-                       dirname = orb.fs.dirname,
-                       normalize = orb.fs.normalize,
-                       mkdir = orb.fs.mkdir,
-                       exec = orb.shell.exec,
-                       pexec = orb.shell.pexec,
-                       read = orb.utils.partial(orb.fs.read, f),
-                       write = orb.utils.partial(orb.fs.write, f),
-                       append = orb.fs.append,
-                       reload = orb.fs.reloaders[f],
-                     },
-               pairs = orb.utils.mtpairs,
-               print = function(...)
-                  write(tostring(...)) write("\n") end,
-               coroutine = { yield = coroutine.yield,
-                             status = coroutine.status },
-               io = { write = write, read = read },
-               type = type,
-               table = { concat = table.concat,
-                         remove = table.remove,
-                         insert = table.insert,
-               },
-      }
+      local box = { orb = { utils = orb.utils,
+                            dirname = orb.fs.dirname,
+                            normalize = orb.fs.normalize,
+                            mkdir = orb.fs.mkdir,
+                            exec = orb.shell.exec,
+                            pexec = orb.shell.pexec,
+                            read = orb.utils.partial(orb.fs.read, f),
+                            write = orb.utils.partial(orb.fs.write, f),
+                            append = orb.fs.append,
+                            reload = orb.fs.reloaders[f],
+                            extra_sandbox = extra_sandbox, },
+                    pairs = orb.utils.mtpairs,
+                    print = function(...)
+                       write(tostring(...)) write("\n") end,
+                    coroutine = { yield = coroutine.yield,
+                                  status = coroutine.status },
+                    io = { write = write, read = read },
+                    type = type,
+                    table = { concat = table.concat,
+                              remove = table.remove,
+                              insert = table.insert,
+                    },
+                  }
+      for k,v in pairs(extra_sandbox or {}) do box[k] = v end
+      return box
    end,
 
    groups = function(f, user)

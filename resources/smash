@@ -22,7 +22,7 @@ while true do
    elseif(var) then
       env[var] = value
    elseif(not input:match("^ *$")) then
-      local success, msg = orb.pexec(f, env, input)
+      local success, msg = orb.pexec(f, env, input, orb.extra_sandbox)
       if(not success) then
          print(msg)
          env.LAST_ERROR = msg
