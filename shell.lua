@@ -4,8 +4,8 @@ orb.shell = {
    new_env = function(user)
       local home = "/home/" .. user
       -- TODO: protected env: shouldn't be allowed to change USER
-      return { PATH = "/bin", PROMPT = "${CWD} $ ", SHELL = "/bin/smash",
-               CWD = home, HOME = home, USER = user,
+      return { PATH = "/bin:" .. home .. "/bin", PROMPT = "${CWD} $ ",
+               SHELL = "/bin/smash", CWD = home, HOME = home, USER = user,
       }
    end,
 

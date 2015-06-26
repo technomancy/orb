@@ -72,7 +72,7 @@ orb.fs = {
       orb.fs.mkdir(f, home)
       f[home]._user = user
       f[home]._group = user
-      orb.fs.mkdir(f, home .. "/diginet")
+      orb.fs.mkdir(f, home .. "/bin")
       orb.fs.add_to_group(f, user, user)
       orb.fs.add_to_group(f, user, "all")
       orb.fs.mkdir(f, "/proc/" .. user)
