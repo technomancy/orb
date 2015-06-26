@@ -38,9 +38,12 @@ if(arg) then
    orb.shell.exec(f1, e1, "mkdir mydir")
    orb.shell.exec(f1, e1, "mkdir /tmp/hi")
    orb.shell.exec(f1, e1, "ls /tmp/hi")
-   orb.shell.exec(f1, e1, "ls > /tmp/mydir")
+   orb.shell.exec(f1, e1, "/bin/ls > /tmp/mydir")
    orb.shell.exec(f1, e0, "ls /etc > /tmp/ls-etc")
    orb.shell.exec(f1, e1, "cat /bin/cat > /tmp/cat")
+
+   f1["/home/technomancy/bin"].bye = "print \"good bye\""
+   orb.shell.exec(f1, e1, "bye")
 
    assert(orb.fs.readable(f0, f1["/home/technomancy"], "technomancy"))
    assert(orb.fs.readable(f0, f1["/bin"], "technomancy"))

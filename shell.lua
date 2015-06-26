@@ -61,13 +61,21 @@ orb.shell = {
       local env = orb.utils.shallow_copy(orig_env)
       local executable_name, args = orb.shell.parse(f, env, command)
 
-      for _, d in pairs(orb.utils.split(env.PATH, ":")) do
-         local executable_path = d .. "/" .. executable_name
-         local executable = f[orb.fs.normalize(executable_path, env.CWD)]
-         if(type(executable) == "string") then
-            local chunk = assert(loadstring(executable))
+      local try_run = function(executable_path)
+         if(type(f[executable_path]) == "string") then
+            local chunk = assert(loadstring(f[executable_path]))
             setfenv(chunk, orb.shell.sandbox(f, env, extra_sandbox))
-            return chunk(f, env, args)
+            chunk(f, env, args)
+            return true
+         end
+      end
+
+      if(executable_name:match("^/")) then
+         if try_run(executable_name) then return end
+      else
+         for _, d in pairs(orb.utils.split(env.PATH, ":")) do
+            local path = orb.fs.normalize(d .."/".. executable_name, env.CWD)
+            if try_run(path) then return end
          end
       end
       error(executable_name .. " not found.")
