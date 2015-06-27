@@ -161,6 +161,7 @@ orb.fs = {
    end,
 
    dir_meta = function(dir)
+      assert(dir, "Directory not found.")
       return dir._user, dir._group, dir._group_write
    end,
 
@@ -217,6 +218,7 @@ orb.fs = {
          local target = f
          for _,d in pairs(orb.utils.split(path, "/")) do
             if(d == "") then break end
+            assert(target, "Not found: " .. path)
             -- readable here needs a fully-rooted fs to read groups
             assert(type(target) == "string" or
                       orb.fs.readable(raw_root, target, user),
