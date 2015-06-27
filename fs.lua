@@ -259,7 +259,7 @@ orb.fs = {
             assert(orb.fs.readable(raw_root, raw, user), "Not readable")
             local f = {}
             for k,v in pairs(raw) do
-               if(type(v) == "string") then
+               if(type(v) == "string" or type(v) == "function") then
                   f[k] = v
                elseif(type(v) == "table" and
                       orb.fs.readable(raw_root, v, user)) then
