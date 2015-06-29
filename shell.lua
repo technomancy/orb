@@ -104,6 +104,8 @@ orb.shell = {
                             reload = orb.fs.reloaders[f],
                             extra_sandbox = extra_sandbox, },
                     pairs = orb.utils.mtpairs,
+                    ipairs = ipairs,
+                    unpack = unpack,
                     print = function(...)
                        write(tostring(...)) write("\n") end,
                     coroutine = { yield = coroutine.yield,
