@@ -67,7 +67,7 @@ orb.fs = {
       end
    end,
 
-   add_user = function(f, user)
+   add_user = function(f, user, _) -- TODO: accept password arg
       local home = "/home/" .. user
       orb.fs.mkdir(f, home)
       f[home]._user = user

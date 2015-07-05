@@ -13,8 +13,13 @@ orb.shell = {
    -- list of arguments, but it also searches the argument list for stdio
    -- redirects and sets up the environment's read/write appropriately.
    parse = function(f, env, command)
+      if(type(command) == "table") then
+         local tokens = command
+      else
+         local tokens = orb.utils.split(command, " +")
+      end
+
       local args = {}
-      local tokens = orb.utils.split(command, " +")
       local executable_name = table.remove(tokens, 1)
       local t = table.remove(tokens, 1)
       while t do
@@ -95,6 +100,7 @@ orb.shell = {
       local box = { orb = { utils = orb.utils,
                             dirname = orb.fs.dirname,
                             normalize = orb.fs.normalize,
+                            auth = orb.shell.auth,
                             mkdir = orb.fs.mkdir,
                             exec = orb.shell.exec,
                             pexec = orb.shell.pexec,
@@ -137,7 +143,7 @@ orb.shell = {
       return group_dir and group_dir[user]
    end,
 
-   login = function(f, user, _password)
+   auth = function(f, user, _password)
       -- TODO: check password
       return f.etc.groups[user] and f.home[user]
    end,
