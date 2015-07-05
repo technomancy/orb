@@ -121,6 +121,9 @@ orb.fs = {
                                        grep = "/bin/grep",
                                        reload = "/bin/reload",
                                        mkfifo = "/bin/mkfifo",
+                                       sudo = "/bin/sudo",
+                                       adduser = "/bin/adduser",
+                                       addgroup = "/bin/addgroup",
       }) do
          orb.fs.copy_to_fs(f, fs_path, real_path, orb.mod_dir.."/resources/")
       end
@@ -273,6 +276,9 @@ orb.fs = {
             end
             return next,f,nil
          end,
+
+         -- if getmetatable ever leaks into the sandbox, this leaks too
+         raw_root = raw_root,
       }
       setmetatable(f, mt)
 

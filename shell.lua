@@ -13,10 +13,13 @@ orb.shell = {
    -- list of arguments, but it also searches the argument list for stdio
    -- redirects and sets up the environment's read/write appropriately.
    parse = function(f, env, command)
-      if(type(command) == "table") then
-         local tokens = command
+      local tokens
+      if(type(command) == "string") then
+         tokens = orb.utils.split(command, " +")
+      elseif(not command) then
+         return nil, {}
       else
-         local tokens = orb.utils.split(command, " +")
+         tokens = command
       end
 
       local args = {}
@@ -69,7 +72,10 @@ orb.shell = {
       local try_run = function(executable_path)
          if(type(f[executable_path]) == "string") then
             local chunk = assert(loadstring(f[executable_path]))
-            setfenv(chunk, orb.shell.sandbox(f, env, extra_sandbox))
+            local sandbox = orb.shell.sandbox(f, env, extra_sandbox)
+            -- getting the filesystem metatable would be a security leak
+            assert(not sandbox.getmetatable, "Sandbox leak")
+            setfenv(chunk, sandbox)
             chunk(f, env, args)
             return true
          end
@@ -100,7 +106,10 @@ orb.shell = {
       local box = { orb = { utils = orb.utils,
                             dirname = orb.fs.dirname,
                             normalize = orb.fs.normalize,
-                            auth = orb.shell.auth,
+                            add_user = orb.fs.add_user,
+                            add_to_group = orb.fs.add_to_group,
+                            in_group = orb.shell.in_group,
+                            sudo = orb.shell.sudo,
                             mkdir = orb.fs.mkdir,
                             exec = orb.shell.exec,
                             pexec = orb.shell.pexec,
@@ -143,8 +152,14 @@ orb.shell = {
       return group_dir and group_dir[user]
    end,
 
-   auth = function(f, user, _password)
+   auth = function(f, user, password)
       -- TODO: check password
       return f.etc.groups[user] and f.home[user]
+   end,
+
+   sudo = function(f, user, password)
+      assert(orb.shell.auth(f, user, password), "Incorrect password for "..user)
+      local raw = getmetatable(f).raw_root
+      return orb.fs.proxy(raw, user, raw), orb.shell.new_env(user)
    end,
 }

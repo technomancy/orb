@@ -1,0 +1,9 @@
+ -- -*- lua -*-
+
+local f, env, args = ...
+
+local user = table.remove(args, 1)
+local password = table.remove(args, 1)
+
+local new_f, new_env = orb.sudo(f, user, password)
+orb.exec(new_f, new_env, args, orb.extra_sandbox)
