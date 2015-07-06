@@ -3,10 +3,24 @@
 orb.shell = {
    new_env = function(user)
       local home = "/home/" .. user
-      -- TODO: protected env: shouldn't be allowed to change USER
-      return { PATH = "/bin:" .. home .. "/bin", PROMPT = "${CWD} $ ",
-               SHELL = "/bin/smash", CWD = home, HOME = home, USER = user,
+      local env = { PATH = "/bin:" .. home .. "/bin", PROMPT = "${CWD} $ ",
+                    SHELL = "/bin/smash", CWD = home, HOME = home, USER = user }
+      return orb.shell.wrap_env(env)
+   end,
+
+   wrap_env = function(env)
+      local env = orb.utils.shallow_copy(env)
+      local e = {}
+      local mt = {
+         __iterator = function(_) return next,env,nil end,
+         __index = function(_, k) return env[k] end,
+         __newindex = function(_, k, v)
+            assert(k ~= "USER", "Cannot change user.")
+            env[k] = v
+         end,
       }
+      setmetatable(e, mt)
+      return e
    end,
 
    -- This function does too much: it turns a command string into a tokenized
@@ -43,7 +57,7 @@ orb.shell = {
          -- elseif(t == "|") then
          --    -- TODO: support pipelines of arbitrary length
          --    -- TODO: IN and OUT as buffer tables?
-         --    local env2 = orb.utils.shallow_copy(env)
+         --    local env2 = orb.shell.wrap_env(env)
          --    local buffer = {}
          --    env2.read = function()
          --       while #buffer == 0 do coroutine.yield() end
@@ -66,7 +80,7 @@ orb.shell = {
    -- call; usually you want orb.process.spawn which creates it as a proper
    -- process.
    exec = function(f, orig_env, command, extra_sandbox)
-      local env = orb.utils.shallow_copy(orig_env)
+      local env = orb.shell.wrap_env(orig_env)
       local executable_name, args = orb.shell.parse(f, env, command)
 
       local try_run = function(executable_path)
@@ -118,8 +132,10 @@ orb.shell = {
                             write = orb.utils.partial(orb.fs.write, f),
                             append = orb.fs.append,
                             reload = orb.fs.reloaders[f],
-                            extra_sandbox = extra_sandbox, },
+                            extra_sandbox = extra_sandbox,
+                            wrap_env = orb.shell.wrap_env, },
                     pairs = orb.utils.mtpairs,
+                    pcall = pcall,
                     ipairs = ipairs,
                     unpack = unpack,
                     print = function(...)
