@@ -77,4 +77,25 @@ orb.utils = {
       for _,_ in pairs(t) do n = n + 1 end
       return n
    end,
+
+   -- for hashing passwords when minetest is absent
+   exec_capture = function(cmd)
+      local f = assert(io.popen(cmd, 'r'))
+      local s = assert(f:read('*a'))
+      f:close()
+      return s
+   end,
+
+   sha1sum = function(string)
+      local sum = orb.utils.exec_capture("echo " .. string .. "| sha1sum")
+      return sum:gsub("[^0-9a-z]", "")
+   end,
+
+   get_password_hash = function(u, p)
+      if(minetest) then
+         return minetest.get_password_hash(u, p)
+      else
+         return orb.utils.sha1sum(u .. ":" .. p)
+      end
+   end,
 }

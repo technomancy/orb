@@ -1,22 +1,20 @@
 -- a fake lil' OS
 
-orb = orb or {
-   mod_dir = (minetest and minetest.get_modpath("orb")) or
-      debug.getinfo(1,"S").source:sub(2, -9):gsub("(/+)$", "/") }
+orb = { dir = (mintest and minetest.get_modpath("orb")) or "." }
 
-if(orb.mod_dir == "") then orb.mod_dir = "." end
-
-dofile(orb.mod_dir .. "/utils.lua")
-dofile(orb.mod_dir .. "/fs.lua")
-dofile(orb.mod_dir .. "/shell.lua")
-dofile(orb.mod_dir .. "/process.lua")
+dofile(orb.dir .. "/utils.lua")
+dofile(orb.dir .. "/fs.lua")
+dofile(orb.dir .. "/shell.lua")
+dofile(orb.dir .. "/process.lua")
 
 -- for interactive use, but also as a sample of how the API works:
 if(arg) then
    -- start with an empty filesystem
    f_raw = orb.fs.new_raw()
    f0 = orb.fs.seed(orb.fs.proxy(f_raw, "root", f_raw),
-                    {"technomancy", "buddyberg", "zacherson"})
+                    {technomancy = "hogarth",
+                     buddyberg = "hello"})
+   orb.fs.add_user(f0, "zacherson", "robot")
    f1 = orb.fs.proxy(f_raw, "technomancy", f_raw)
    e0 = orb.shell.new_env("root")
    e1 = orb.shell.new_env("technomancy")

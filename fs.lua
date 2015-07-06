@@ -67,7 +67,7 @@ orb.fs = {
       end
    end,
 
-   add_user = function(f, user, _) -- TODO: accept password arg
+   add_user = function(f, user, password)
       local home = "/home/" .. user
       orb.fs.mkdir(f, home)
       f[home]._user = user
@@ -79,6 +79,7 @@ orb.fs = {
       orb.fs.mkdir(f, "/proc/" .. user)
       f.proc[user]._user = user
       f.proc[user]._group = user
+      f.etc.passwords[user] = orb.utils.get_password_hash(user, password)
    end,
 
    add_to_group = function(f, user, group)
@@ -124,23 +125,26 @@ orb.fs = {
                                        sudo = "/bin/sudo",
                                        adduser = "/bin/adduser",
                                        addgroup = "/bin/addgroup",
+                                       passwd = "/bin/passwd",
       }) do
-         orb.fs.copy_to_fs(f, fs_path, real_path, orb.mod_dir.."/resources/")
+         orb.fs.copy_to_fs(f, fs_path, real_path, orb.dir.."/resources/")
       end
    end,
 
-   -- Load up an empty filesystem.
+   -- Load up an empty filesystem. Provided users will be added as sudoers.
    seed = function(f, users)
       for _,d in pairs({"/etc", "/home", "/tmp", "/bin"}) do
          orb.fs.mkdir(f, d)
          f[d]._group = "all"
       end
 
+      orb.fs.mkdir(f, "/etc/passwords")
       orb.fs.mkdir(f, "/etc/groups")
       f["/tmp"]._group_write = "true"
 
-      for _,user in pairs(users) do
-         orb.fs.add_user(f, user)
+      for user, password in pairs(users) do
+         orb.fs.add_user(f, user, password)
+         orb.fs.add_to_group(f, user, "sudoers")
       end
 
       orb.fs.load_bin(f)
@@ -186,7 +190,7 @@ orb.fs = {
    -- Reload all of orb's own code, and reset the /bin directory.
    reloader = function(f)
       return function()
-         dofile(orb.mod_dir .. "/init.lua")
+         dofile(orb.dir .. "/init.lua")
          orb.fs.load_bin(f)
       end
    end,

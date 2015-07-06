@@ -110,6 +110,7 @@ orb.shell = {
                             add_to_group = orb.fs.add_to_group,
                             in_group = orb.shell.in_group,
                             sudo = orb.shell.sudo,
+                            change_password = orb.shell.change_password,
                             mkdir = orb.fs.mkdir,
                             exec = orb.shell.exec,
                             pexec = orb.shell.pexec,
@@ -153,13 +154,24 @@ orb.shell = {
    end,
 
    auth = function(f, user, password)
-      -- TODO: check password
-      return f.etc.groups[user] and f.home[user]
+      local raw_fs = getmetatable(f).raw_root
+      return raw_fs.etc.passwords[user] ==
+         orb.utils.get_password_hash(user, password)
    end,
 
-   sudo = function(f, user, password)
-      assert(orb.shell.auth(f, user, password), "Incorrect password for "..user)
+   sudo = function(f, env, user)
+      local raw_fs = getmetatable(f).raw_root
+      assert(orb.shell.in_group(raw_fs, env.USER, "sudoers"),
+             "Must be in the sudoers group.")
+      assert(raw_fs.etc.passwords[user] or user == "root",
+             "User does not exist.")
+      return orb.fs.proxy(raw_fs, user, raw_fs), orb.shell.new_env(user)
+   end,
+
+   change_password = function(f, user, old_password, new_password)
+      assert(orb.shell.auth(f, user, old_password),
+             "Incorrect password for "..user)
       local raw = getmetatable(f).raw_root
-      return orb.fs.proxy(raw, user, raw), orb.shell.new_env(user)
+      raw.etc.passwords[user] = orb.utils.get_password_hash(user, new_password)
    end,
 }
