@@ -8,7 +8,7 @@ if(smashrc) then local f = loadstring(smashrc) assert(f) return f() end
 
 while true do
    io.write(orb.utils.interp(env.PROMPT, env))
-   local input = io.read()
+   local input = orb.utils.interp(io.read(), env)
    if not input or input == "exit" or input == "logout" then return end
 
    local var, value = input:match("export (.+)=(.*)")
