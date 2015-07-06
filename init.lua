@@ -1,6 +1,6 @@
 -- a fake lil' OS
 
-orb = { dir = (mintest and minetest.get_modpath("orb")) or "." }
+orb = { dir = (minetest and minetest.get_modpath("orb")) or "." }
 
 dofile(orb.dir .. "/utils.lua")
 dofile(orb.dir .. "/fs.lua")
