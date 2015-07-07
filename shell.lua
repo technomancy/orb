@@ -3,7 +3,6 @@
 orb.shell = {
    new_env = function(user)
       local home = "/home/" .. user
-      -- TODO: protected env: shouldn't be allowed to change USER
       return { PATH = "/bin:" .. home .. "/bin", PROMPT = "${CWD} $ ",
                SHELL = "/bin/smash", CWD = home, HOME = home, USER = user,
       }
@@ -103,17 +102,29 @@ orb.shell = {
       local read = function() return orb.fs.read(f, env.IN) end
       local write = function(...) return orb.fs.write(f, env.OUT, ...) end
 
+      -- env is just a table; it can be modified by any user script.
+      -- Therefore any function exposed in the sandbox which trusts env.USER
+      -- must be wrapped with this function which asserts that the USER
+      -- value has not been modified.
+      local lock_env_user = function(f, env_arg_position)
+         return function(...)
+            local args = {...}
+            assert(args[env_arg_position].USER == env.USER, "Changed USER!")
+            return f(...)
+         end
+      end
+
       local box = { orb = { utils = orb.utils,
+                            mkdir = orb.fs.mkdir,
                             dirname = orb.fs.dirname,
                             normalize = orb.fs.normalize,
                             add_user = orb.fs.add_user,
                             add_to_group = orb.fs.add_to_group,
                             in_group = orb.shell.in_group,
-                            sudo = orb.shell.sudo,
                             change_password = orb.shell.change_password,
-                            mkdir = orb.fs.mkdir,
-                            exec = orb.shell.exec,
-                            pexec = orb.shell.pexec,
+                            sudo = lock_env_user(orb.shell.sudo, 2),
+                            exec = lock_env_user(orb.shell.exec, 2),
+                            pexec = lock_env_user(orb.shell.pexec, 2),
                             read = orb.utils.partial(orb.fs.read, f),
                             write = orb.utils.partial(orb.fs.write, f),
                             append = orb.fs.append,
@@ -159,13 +170,15 @@ orb.shell = {
          orb.utils.get_password_hash(user, password)
    end,
 
-   sudo = function(f, env, user)
+   sudo = function(f, env, user, args, extra_sandbox)
       local raw_fs = getmetatable(f).raw_root
       assert(orb.shell.in_group(raw_fs, env.USER, "sudoers"),
              "Must be in the sudoers group.")
       assert(raw_fs.etc.passwords[user] or user == "root",
              "User does not exist.")
-      return orb.fs.proxy(raw_fs, user, raw_fs), orb.shell.new_env(user)
+      local new_f = orb.fs.proxy(raw_fs, user, raw_fs)
+      local new_env = orb.shell.new_env(user)
+      orb.shell.exec(new_f, new_env, args, extra_sandbox)
    end,
 
    change_password = function(f, user, old_password, new_password)
