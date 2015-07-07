@@ -44,7 +44,10 @@ Group membership is implemented by placing a file in
 `/etc/group/$GROUP` named after the user in question.
 
 The shell is sandboxed and only has access to the whitelist in
-orb.process.sandbox, which is currently rather small.
+orb.process.sandbox, which is currently rather small. Since the
+environment is just a table, it can be modified at will by user
+code. Sandbox functions which need to trust the `USER` environment
+value must be wrapped in order to ensure it hasn't changed.
 
 Spawning processes places entries in the `/proc/$USER/` table. The key
 is the process id, and the value is a coroutine for that process. The
@@ -67,29 +70,28 @@ scheduler currently runs by looping over all the coroutines in the
 * [x] chgrp
 * [x] ps
 * [x] grep
+* [x] sudo
+* [x] passwd
 * [ ] man
 * [ ] mail
 * [ ] ssh
 * [ ] scp
-* [ ] sudo
-* [ ] kill?
+* [ ] kill
 * [ ] more
-* [ ] passwd
 
 Other shell features
 
 * [x] sandbox scripts (limited api access)
 * [x] enforce access controls in the filesystem
 * [x] input/output redirection
+* [x] env var interpolation
+* [x] user passwords
 * [ ] pipes (half-implemented)
 * [ ] globs
-* [ ] env var interpolation
 * [ ] quoting in shell args
 * [ ] pre-emptive multitasking (see [this thread](https://forum.minetest.net/viewtopic.php?f=47&t=10185) for implementation ideas)
 * [ ] /proc nodes for exposing connected digiline peripherals
-
 * [ ] more of the built-in scripts should take multiple target arguments
-* [ ] user passwords
 
 ## Differences from Unix
 
@@ -128,6 +130,15 @@ access, though the table you're given is a proxy table that enforces
 permissions with Lua metamethods. Regular files in the filesystem are
 just strings in a table, and special nodes (like named pipes) are
 functions.
+
+Sudo takes the user to switch to as its first argument, and the
+following arguments are taken as a command to run as the other
+user. There is no password required; if you are in the `sudoers`
+group, you can run sudo.
+
+You can refer to environment variables in shell commands, but the
+traditional Unix `$VAR` does not work; you must use the less-ambiguous
+`${VAR}` instead.
 
 ## License
 
