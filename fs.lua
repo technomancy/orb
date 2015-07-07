@@ -221,27 +221,27 @@ orb.fs = {
    -- requires access to the "/etc/groups" directory, which is why this
    -- function takes a raw_root argument as well.
    proxy = function(raw, user, raw_root)
-      local descend = function(f, path, user)
+      local descend = function(f, path, descending_user)
          local target = f
          for _,d in pairs(orb.utils.split(path, "/")) do
             if(d == "") then break end
             assert(target, "Not found: " .. path)
             -- readable here needs a fully-rooted fs to read groups
             assert(type(target) == "string" or
-                      orb.fs.readable(raw_root, target, user),
+                      orb.fs.readable(raw_root, target, descending_user),
                    ("Not readable: " .. path .. " d: " .. d))
             target = target[d]
          end
          return target
       end
 
-      local unreadable = function(_k, v)
+      local unreadable = function(_, v)
          return {_user = v._user, _group = v._group}
       end
 
       local f = {}
       local mt = {
-         __index = function(_f, path)
+         __index = function(_, path)
             local target = descend(raw, path, user)
             if(type(target) == "table") then
                return orb.fs.proxy(target, user, raw_root)
@@ -250,7 +250,7 @@ orb.fs = {
             end
          end,
 
-         __newindex = function(f, path, content)
+         __newindex = function(_, path, content)
             local segments = orb.utils.split(path, "/")
             local base = table.remove(segments, #segments)
             local target = descend(raw, "/"..table.concat(segments,"/"), user)
@@ -262,23 +262,23 @@ orb.fs = {
 
          -- Unfortunately Lua 5.1 has no way to specify an iterator from the
          -- metatable, so this only works with orb.utils.mtpairs. =(
-         __iterator = function(_f)
+         __iterator = function(_)
             assert(orb.fs.readable(raw_root, raw, user), "Not readable")
-            local f = {}
+            local f2 = {}
             for k,v in pairs(raw) do
                if(type(v) == "string" or type(v) == "function") then
-                  f[k] = v
+                  f2[k] = v
                elseif(type(v) == "table" and
                       orb.fs.readable(raw_root, v, user)) then
-                  f[k] = orb.fs.proxy(v, user, raw_root)
+                  f2[k] = orb.fs.proxy(v, user, raw_root)
                elseif(type(v) == "table") then
-                  f[k] = unreadable(k, v)
+                  f2[k] = unreadable(k, v)
                else
                   print("Unknown file type: " .. k)
                   print(v)
                end
             end
-            return next,f,nil
+            return next,f2,nil
          end,
 
          -- if getmetatable ever leaks into the sandbox, this leaks too

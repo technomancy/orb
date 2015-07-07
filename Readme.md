@@ -44,7 +44,7 @@ Group membership is implemented by placing a file in
 `/etc/group/$GROUP` named after the user in question.
 
 The shell is sandboxed and only has access to the whitelist in
-orb.process.sandbox, which is currently rather small. Since the
+`orb.process.sandbox`, which is currently rather small. Since the
 environment is just a table, it can be modified at will by user
 code. Sandbox functions which need to trust the `USER` environment
 value must be wrapped in order to ensure it hasn't changed.

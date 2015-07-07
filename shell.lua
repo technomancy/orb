@@ -106,11 +106,11 @@ orb.shell = {
       -- Therefore any function exposed in the sandbox which trusts env.USER
       -- must be wrapped with this function which asserts that the USER
       -- value has not been modified.
-      local lock_env_user = function(f, env_arg_position)
+      local lock_env_user = function(fn, env_arg_position)
          return function(...)
             local args = {...}
             assert(args[env_arg_position].USER == env.USER, "Changed USER!")
-            return f(...)
+            return fn(...)
          end
       end
 
