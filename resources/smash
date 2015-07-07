@@ -1,7 +1,7 @@
 -- -*- lua -*-
 
 local f, env, args = ...
-local env = orb.wrap_env(env)
+local env = orb.utils.shallow_copy(env)
 
 local smashrc = f[env.HOME .. "/.smashrc"]
 if(smashrc) then local f = loadstring(smashrc) assert(f) return f() end
@@ -20,13 +20,7 @@ while true do
    elseif(change_dir) then
       env.CWD = orb.normalize(change_dir, env.CWD)
    elseif(var) then
-      local success, msg = pcall(function() env[var] = value end)
-      if(not success) then
-         print(msg)
-         env.LAST_ERROR = msg
-      else
-         env.LAST_ERROR = nil
-      end
+      env[var] = value
    elseif(not input:match("^ *$")) then
       local success, msg = orb.pexec(f, env, input, orb.extra_sandbox)
       if(not success) then

@@ -21,7 +21,7 @@ orb.utils = {
       local copy
       if orig_type == 'table' then
          copy = {}
-         for orig_key, orig_value in orb.utils.mtpairs(orig) do
+         for orig_key, orig_value in pairs(orig) do
             copy[orig_key] = orig_value
          end
       else -- number, string, boolean, etc
