@@ -72,11 +72,11 @@ scheduler currently runs by looping over all the coroutines in the
 * [x] grep
 * [x] sudo
 * [x] passwd
+* [x] kill
 * [ ] man
 * [ ] mail
 * [ ] ssh
 * [ ] scp
-* [ ] kill
 * [ ] more
 
 Other shell features
