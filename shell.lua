@@ -165,7 +165,7 @@ orb.shell = {
    end,
 
    auth = function(f, user, password)
-      local raw_fs = getmetatable(f).raw_root
+      local raw_fs = (getmetatable(f) and getmetatable(f).raw_root) or f
       return raw_fs.etc.passwords[user] ==
          orb.utils.get_password_hash(user, password)
    end,
