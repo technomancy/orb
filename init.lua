@@ -1,5 +1,7 @@
 -- a fake lil' OS
 
+assert(setfenv, "Needs lua 5.1; sorry.")
+
 orb = { dir = (minetest and minetest.get_modpath("orb")) or "." }
 
 dofile(orb.dir .. "/utils.lua")
