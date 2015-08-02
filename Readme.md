@@ -140,6 +140,13 @@ You can refer to environment variables in shell commands, but the
 traditional Unix `$VAR` does not work; you must use the less-ambiguous
 `${VAR}` instead.
 
+## Portability
+
+Currently when running outside of minetest it needs to shell out to
+the `sha1sum` executable because Lua does not have any built-in
+checksumming functionality. This could pose a problem when running on
+platforms that lack this executable.
+
 ## License
 
 Copyright © 2015 Phil Hagelberg and contributors. Licensed under the
