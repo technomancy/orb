@@ -2,7 +2,7 @@
 
 assert(setfenv, "Needs lua 5.1; sorry.")
 
-orb = { dir = (minetest and minetest.get_modpath("orb")) or "." }
+orb = { dir = (minetest and minetest.get_modpath("orb")) or ... }
 
 dofile(orb.dir .. "/utils.lua")
 dofile(orb.dir .. "/fs.lua")
@@ -10,7 +10,7 @@ dofile(orb.dir .. "/shell.lua")
 dofile(orb.dir .. "/process.lua")
 
 -- for interactive use, but also as a sample of how the API works:
-if(arg) then
+if(false) then
    -- start with an empty filesystem
    f_raw = orb.fs.new_raw()
    f0 = orb.fs.seed(orb.fs.proxy(f_raw, "root", f_raw),
@@ -55,3 +55,5 @@ if(arg) then
    -- assert(not orb.fs.writeable(f0, f1["/home/zacherson"], "technomancy"))
    -- assert(not orb.fs.readable(f0, f1["/home/zacherson"], "technomancy"))
 end
+
+return orb
